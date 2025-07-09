@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/FirebaseAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Image, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { createEvent } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 
 const CreateEvent = () => {
@@ -22,10 +22,10 @@ const CreateEvent = () => {
     title: '',
     description: '',
     venue: '',
-    event_date: '',
+    eventDate: '',
     category: '',
-    image_url: '',
-    max_attendees: '',
+    imageUrl: '',
+    maxAttendees: '',
     tags: ''
   });
 
@@ -50,35 +50,25 @@ const CreateEvent = () => {
     try {
       const tagsArray = eventData.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
       
-      const { error } = await supabase
-        .from('events')
-        .insert({
-          title: eventData.title,
-          description: eventData.description,
-          venue: eventData.venue,
-          event_date: eventData.event_date,
-          category: eventData.category,
-          image_url: eventData.image_url || null,
-          max_attendees: eventData.max_attendees ? parseInt(eventData.max_attendees) : null,
-          tags: tagsArray.length > 0 ? tagsArray : null,
-          organizer_id: user.id,
-          is_public: true
-        });
+      await createEvent({
+        title: eventData.title,
+        description: eventData.description,
+        venue: eventData.venue,
+        eventDate: new Date(eventData.eventDate),
+        category: eventData.category,
+        imageUrl: eventData.imageUrl || undefined,
+        maxAttendees: eventData.maxAttendees ? parseInt(eventData.maxAttendees) : undefined,
+        tags: tagsArray,
+        postedBy: user.uid,
+        rsvp: [],
+        likes: []
+      });
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create event",
-          variant: "destructive"
-        });
-        console.error('Error creating event:', error);
-      } else {
-        toast({
-          title: "Success!",
-          description: "Event created successfully",
-        });
-        navigate('/dashboard');
-      }
+      toast({
+        title: "Success!",
+        description: "Event created successfully",
+      });
+      navigate('/dashboard');
     } catch (error) {
       toast({
         title: "Error",
@@ -158,8 +148,8 @@ const CreateEvent = () => {
                       id="date"
                       type="datetime-local"
                       className="pl-10"
-                      value={eventData.event_date}
-                      onChange={(e) => setEventData(prev => ({ ...prev, event_date: e.target.value }))}
+                      value={eventData.eventDate}
+                      onChange={(e) => setEventData(prev => ({ ...prev, eventDate: e.target.value }))}
                       required
                     />
                   </div>
@@ -195,8 +185,8 @@ const CreateEvent = () => {
                       type="number"
                       placeholder="Leave empty for unlimited"
                       className="pl-10"
-                      value={eventData.max_attendees}
-                      onChange={(e) => setEventData(prev => ({ ...prev, max_attendees: e.target.value }))}
+                      value={eventData.maxAttendees}
+                      onChange={(e) => setEventData(prev => ({ ...prev, maxAttendees: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -212,8 +202,8 @@ const CreateEvent = () => {
                     type="url"
                     placeholder="https://example.com/image.jpg"
                     className="pl-10"
-                    value={eventData.image_url}
-                    onChange={(e) => setEventData(prev => ({ ...prev, image_url: e.target.value }))}
+                    value={eventData.imageUrl}
+                    onChange={(e) => setEventData(prev => ({ ...prev, imageUrl: e.target.value }))}
                   />
                 </div>
               </div>

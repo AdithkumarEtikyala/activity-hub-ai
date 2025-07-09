@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('Auth state changed:', firebaseUser?.uid);
       
-      if (firebaseUser) {
+      if (firebaseUser && firebaseUser.emailVerified) {
         setFirebaseUser(firebaseUser);
         
         // Get additional user data from Firestore
@@ -64,7 +64,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
           } else {
             console.log('No user document found in Firestore');
-            // Create a basic user object even if no Firestore doc exists
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
@@ -76,7 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
-          // Fallback to basic user data
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
@@ -87,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
         }
       } else {
-        console.log('No authenticated user');
+        console.log('No authenticated or verified user');
         setFirebaseUser(null);
         setUser(null);
       }
@@ -102,6 +100,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log('Sign in successful:', result.user.uid);
+      
+      if (!result.user.emailVerified) {
+        throw new Error('Please verify your email before signing in.');
+      }
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
@@ -122,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await sendEmailVerification(user);
       console.log('Email verification sent');
 
-      // Store additional user data in Firestore (with proper error handling)
+      // Store additional user data in Firestore
       try {
         await setDoc(doc(db, 'users', user.uid), {
           email,
@@ -143,7 +145,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('User data stored in Firestore');
       } catch (firestoreError) {
         console.error('Error storing user data in Firestore:', firestoreError);
-        // Don't throw here - user account was created successfully
       }
 
       return { needsVerification: true };
