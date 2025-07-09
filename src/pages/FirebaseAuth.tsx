@@ -32,6 +32,8 @@ const FirebaseAuth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Sign up form submitted');
+    
     if (signUpData.password !== signUpData.confirmPassword) {
       toast({
         title: "Error",
@@ -43,13 +45,16 @@ const FirebaseAuth = () => {
 
     setLoading(true);
     try {
+      console.log('Calling signUp function');
       await signUp(signUpData.email, signUpData.password, signUpData.displayName, signUpData.role);
+      console.log('SignUp successful');
       toast({
         title: "Success!",
         description: "Account created successfully",
       });
       navigate('/');
     } catch (error: any) {
+      console.error('SignUp error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create account",
@@ -62,16 +67,20 @@ const FirebaseAuth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Sign in form submitted');
     setLoading(true);
     
     try {
+      console.log('Calling signIn function');
       await signIn(signInData.email, signInData.password);
+      console.log('SignIn successful');
       toast({
         title: "Success!",
         description: "Signed in successfully",
       });
       navigate('/');
     } catch (error: any) {
+      console.error('SignIn error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to sign in",

@@ -37,27 +37,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Setting up Firebase auth listener');
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser?.uid);
+      
       if (firebaseUser) {
         setFirebaseUser(firebaseUser);
         
         // Get additional user data from Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log('User data from Firestore:', userData);
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              displayName: firebaseUser.displayName || '',
+              photoURL: firebaseUser.photoURL || undefined,
+              role: userData.role,
+              createdAt: userData.createdAt?.toDate() || new Date(),
+              university: userData.university,
+              major: userData.major,
+              graduationYear: userData.graduationYear
+            });
+          } else {
+            console.log('No user document found in Firestore');
+            // Create a basic user object even if no Firestore doc exists
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              displayName: firebaseUser.displayName || '',
+              photoURL: firebaseUser.photoURL || undefined,
+              role: 'member',
+              createdAt: new Date()
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Fallback to basic user data
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName || '',
             photoURL: firebaseUser.photoURL || undefined,
-            role: userData.role,
-            createdAt: userData.createdAt?.toDate() || new Date(),
-            university: userData.university,
-            major: userData.major,
-            graduationYear: userData.graduationYear
+            role: 'member',
+            createdAt: new Date()
           });
         }
       } else {
+        console.log('No authenticated user');
         setFirebaseUser(null);
         setUser(null);
       }
@@ -68,35 +97,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    console.log('Attempting to sign in user:', email);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful:', result.user.uid);
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string, displayName: string, role: 'member' | 'organizer') => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    console.log('Attempting to sign up user:', email);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log('User created:', user.uid);
 
-    // Update user profile
-    await updateProfile(user, { displayName });
+      // Update user profile
+      await updateProfile(user, { displayName });
 
-    // Store additional user data in Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      email,
-      displayName,
-      role,
-      createdAt: new Date(),
-      photoURL: user.photoURL
-    });
+      // Store additional user data in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email,
+        displayName,
+        role,
+        createdAt: new Date(),
+        photoURL: user.photoURL
+      });
 
-    // Store user role separately for easier querying
-    await setDoc(doc(db, 'userRoles', user.uid), {
-      uid: user.uid,
-      role,
-      createdAt: new Date()
-    });
+      // Store user role separately for easier querying
+      await setDoc(doc(db, 'userRoles', user.uid), {
+        uid: user.uid,
+        role,
+        createdAt: new Date()
+      });
+
+      console.log('User data stored in Firestore');
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    console.log('Signing out user');
+    try {
+      await firebaseSignOut(auth);
+      console.log('Sign out successful');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
   };
 
   return (
