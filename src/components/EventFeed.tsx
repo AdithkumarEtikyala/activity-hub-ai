@@ -22,11 +22,11 @@ interface Event {
   clubs?: {
     name: string;
     logo_url?: string;
-  };
+  } | null;
   profiles?: {
     full_name: string;
     avatar_url?: string;
-  };
+  } | null;
   user_rsvp?: Array<{ rsvp_status: string }>;
 }
 
@@ -57,7 +57,22 @@ const EventFeed = () => {
         return;
       }
 
-      setEvents(data || []);
+      // Transform the data to match our Event interface
+      const transformedEvents: Event[] = (data || []).map(event => ({
+        id: event.id,
+        title: event.title,
+        description: event.description || '',
+        venue: event.venue || '',
+        event_date: event.event_date,
+        category: event.category || '',
+        image_url: event.image_url,
+        tags: event.tags || [],
+        current_attendees: event.current_attendees || 0,
+        clubs: event.clubs,
+        profiles: event.profiles
+      }));
+
+      setEvents(transformedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
