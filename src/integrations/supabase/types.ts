@@ -14,7 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      club_memberships: {
+        Row: {
+          club_id: string | null
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          club_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          club_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_memberships_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clubs: {
+        Row: {
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          member_count: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          member_count?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          member_count?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      event_attendees: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          rsvp_status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          rsvp_status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          rsvp_status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          category: string | null
+          club_id: string | null
+          created_at: string | null
+          current_attendees: number | null
+          description: string | null
+          end_date: string | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_public: boolean | null
+          max_attendees: number | null
+          organizer_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          venue: string | null
+        }
+        Insert: {
+          category?: string | null
+          club_id?: string | null
+          created_at?: string | null
+          current_attendees?: number | null
+          description?: string | null
+          end_date?: string | null
+          event_date: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Update: {
+          category?: string | null
+          club_id?: string | null
+          created_at?: string | null
+          current_attendees?: number | null
+          description?: string | null
+          end_date?: string | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          graduation_year: number | null
+          id: string
+          major: string | null
+          university: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id: string
+          major?: string | null
+          university?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id?: string
+          major?: string | null
+          university?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

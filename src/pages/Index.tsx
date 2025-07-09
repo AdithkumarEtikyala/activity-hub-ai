@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar, Users, Sparkles, Bell, Search, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import EventFeed from "@/components/EventFeed";
-import AuthModal from "@/components/AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const features = [
     {
@@ -47,9 +48,17 @@ const Index = () => {
   ];
 
   const handleAuthAction = (mode: 'login' | 'signup') => {
-    setAuthMode(mode);
-    setShowAuthModal(true);
+    navigate('/auth');
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -92,18 +101,21 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Sample Event Feed */}
-      <section className="py-20 px-4 bg-white/30 backdrop-blur-sm">
+      {/* Live Event Feed */}
+      <section className="py-20 px-4 bg-white/30 backdrop-blur-sm" id="events">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4 bg-purple-100 text-purple-700">
-              Live Feed Preview
+              {user ? 'Your Campus Events' : 'Live Feed Preview'}
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Discover Campus Events
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Stay connected with everything happening on your campus
+              {user 
+                ? 'RSVP to events and connect with your campus community' 
+                : 'Stay connected with everything happening on your campus'
+              }
             </p>
           </div>
           
@@ -112,45 +124,40 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-3xl p-12 text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Ready to Transform Your Campus Experience?
-              </h2>
-              <p className="text-xl mb-8 text-blue-100">
-                Join thousands of students already using CampusConnect to stay engaged
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8"
-                  onClick={() => handleAuthAction('signup')}
-                >
-                  Get Started Free
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8"
-                  onClick={() => handleAuthAction('login')}
-                >
-                  Sign In
-                </Button>
+      {!user && (
+        <section className="py-20 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-3xl p-12 text-white relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/10"></div>
+              <div className="relative z-10">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                  Ready to Transform Your Campus Experience?
+                </h2>
+                <p className="text-xl mb-8 text-blue-100">
+                  Join thousands of students already using CampusConnect to stay engaged
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8"
+                    onClick={() => handleAuthAction('signup')}
+                  >
+                    Get Started Free
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8"
+                    onClick={() => handleAuthAction('login')}
+                  >
+                    Sign In
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
+        </section>
+      )}
     </div>
   );
 };

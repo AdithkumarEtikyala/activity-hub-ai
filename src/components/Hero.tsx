@@ -2,12 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, ArrowRight, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeroProps {
   onAuthAction: (mode: 'login' | 'signup') => void;
 }
 
 const Hero = ({ onAuthAction }: HeroProps) => {
+  const { user } = useAuth();
+
   return (
     <section className="relative py-20 lg:py-32 overflow-hidden">
       {/* Background Elements */}
@@ -35,27 +38,43 @@ const Hero = ({ onAuthAction }: HeroProps) => {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
-            Discover events, join clubs, and engage with your campus community through our AI-powered social platform designed for college life.
+            {user 
+              ? `Welcome back! Discover events, join clubs, and engage with your campus community.`
+              : 'Discover events, join clubs, and engage with your campus community through our AI-powered social platform designed for college life.'
+            }
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 text-lg group"
-              onClick={() => onAuthAction('signup')}
-            >
-              Start Exploring
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-2 border-gray-300 hover:border-blue-500 font-semibold px-8 py-4 text-lg group"
-            >
-              <Play className="mr-2 h-5 w-5" />
-              Watch Demo
-            </Button>
+            {user ? (
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 text-lg group"
+                onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Explore Events
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 text-lg group"
+                  onClick={() => onAuthAction('signup')}
+                >
+                  Start Exploring
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-2 border-gray-300 hover:border-blue-500 font-semibold px-8 py-4 text-lg group"
+                >
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch Demo
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Stats */}
