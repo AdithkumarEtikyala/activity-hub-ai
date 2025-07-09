@@ -42,7 +42,7 @@ const EventFeed = () => {
 
   const fetchEvents = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('events')
         .select(`
           *,
@@ -51,17 +51,6 @@ const EventFeed = () => {
         `)
         .eq('is_public', true)
         .order('event_date', { ascending: true });
-
-      if (user) {
-        query = query.select(`
-          *,
-          clubs(name, logo_url),
-          profiles:organizer_id(full_name, avatar_url),
-          user_rsvp:event_attendees!inner(rsvp_status)
-        `);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching events:', error);
@@ -242,10 +231,9 @@ const EventFeed = () => {
                   size="sm" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   onClick={() => handleRSVP(event.id)}
-                  disabled={!user || (event.user_rsvp && event.user_rsvp.length > 0)}
+                  disabled={!user}
                 >
-                  {!user ? 'Sign in to RSVP' : 
-                   (event.user_rsvp && event.user_rsvp.length > 0) ? 'Already RSVP\'d' : 'RSVP'}
+                  {!user ? 'Sign in to RSVP' : 'RSVP'}
                 </Button>
               </div>
             </div>
