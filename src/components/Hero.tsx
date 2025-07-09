@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, ArrowRight, Sparkles } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/FirebaseAuthContext";
 
 interface HeroProps {
   onAuthAction: (mode: 'login' | 'signup') => void;

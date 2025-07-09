@@ -160,14 +160,14 @@ const EventFeed = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={event.profiles?.avatar_url} />
+                  <AvatarImage src={event.profiles?.avatar_url || undefined} />
                   <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
-                    {event.clubs?.name?.charAt(0) || event.profiles?.full_name?.charAt(0) || 'E'}
+                    {event.clubs?.name?.charAt(0) || (event.profiles?.full_name ? event.profiles.full_name.charAt(0) : 'E')}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {event.clubs?.name || event.profiles?.full_name || 'Event Organizer'}
+                    {event.clubs?.name || (event.profiles?.full_name ? event.profiles.full_name : 'Event Organizer')}
                   </p>
                   <p className="text-sm text-gray-500">
                     {new Date(event.event_date).toLocaleDateString()}
