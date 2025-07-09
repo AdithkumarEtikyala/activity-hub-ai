@@ -1,36 +1,15 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
 import { format } from "date-fns";
+import { useEvents } from "@/hooks/useFirestore";
 
 const EventFeed = () => {
-  const { data: events, isLoading, error } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('is_public', true)
-        .gte('event_date', new Date().toISOString())
-        .order('event_date', { ascending: true })
-        .limit(20);
+  const { events, loading } = useEvents();
 
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -52,14 +31,6 @@ const EventFeed = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-500">Error loading events: {error.message}</p>
-      </div>
-    );
-  }
-
   if (!events || events.length === 0) {
     return (
       <div className="text-center py-12">
@@ -74,10 +45,10 @@ const EventFeed = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {events.map((event) => (
         <Card key={event.id} className="group hover:shadow-lg transition-shadow duration-200">
-          {event.image_url && (
+          {event.imageUrl && (
             <div className="relative h-48 overflow-hidden rounded-t-lg">
               <img
-                src={event.image_url}
+                src={event.imageUrl}
                 alt={event.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />
@@ -106,7 +77,7 @@ const EventFeed = () => {
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
                 <Calendar className="h-4 w-4 mr-2" />
-                {format(new Date(event.event_date), 'PPP')}
+                {format(event.eventDate, 'PPP')}
               </div>
               
               {event.venue && (
@@ -119,15 +90,13 @@ const EventFeed = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-sm text-gray-600">
                   <Users className="h-4 w-4 mr-2" />
-                  {event.current_attendees || 0}
-                  {event.max_attendees && ` / ${event.max_attendees}`} attending
+                  {event.rsvp?.length || 0}
+                  {event.maxAttendees && ` / ${event.maxAttendees}`} attending
                 </div>
                 
-                {event.profiles && (
-                  <div className="text-xs text-gray-500">
-                    by {event.profiles.full_name || 'Anonymous'}
-                  </div>
-                )}
+                <div className="text-xs text-gray-500">
+                  by Event Organizer
+                </div>
               </div>
 
               <Button className="w-full mt-4">
