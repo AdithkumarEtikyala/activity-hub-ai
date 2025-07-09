@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,7 @@ const FirebaseAuth = () => {
         setShowSuccess(true);
         toast({
           title: "Account Created Successfully!",
-          description: "Please check your email to verify your account before signing in.",
+          description: "Please check your email to verify your account. You can still sign in without verification.",
         });
       } else {
         navigate('/');
@@ -110,12 +109,14 @@ const FirebaseAuth = () => {
       
       if (error.code === 'auth/user-not-found') {
         errorMessage = "No account found with this email";
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = "Incorrect password";
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password";
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = "Invalid email address";
       } else if (error.code === 'auth/user-disabled') {
         errorMessage = "This account has been disabled";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many failed attempts. Please try again later";
       }
       
       toast({
@@ -146,17 +147,16 @@ const FirebaseAuth = () => {
           <CardContent>
             <div className="space-y-4 text-center">
               <p className="text-sm text-gray-600">
-                Please check your email and click the verification link to activate your account.
+                Please check your email and click the verification link to verify your account.
               </p>
-              <p className="text-xs text-gray-500">
-                Didn't receive the email? Check your spam folder or try signing up again.
+              <p className="text-sm text-blue-600 font-medium">
+                You can sign in now even without verification!
               </p>
               <Button 
                 onClick={() => setShowSuccess(false)} 
-                variant="outline" 
-                className="w-full"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                Back to Sign In
+                Sign In Now
               </Button>
             </div>
           </CardContent>
