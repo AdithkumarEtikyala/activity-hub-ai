@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/FirebaseAuthContext";
 
 const FirebaseAuth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
@@ -43,21 +44,45 @@ const FirebaseAuth = () => {
       return;
     }
 
+    if (signUpData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       console.log('Calling signUp function');
-      await signUp(signUpData.email, signUpData.password, signUpData.displayName, signUpData.role);
+      const result = await signUp(signUpData.email, signUpData.password, signUpData.displayName, signUpData.role);
       console.log('SignUp successful');
-      toast({
-        title: "Success!",
-        description: "Account created successfully",
-      });
-      navigate('/');
+      
+      if (result.needsVerification) {
+        setShowSuccess(true);
+        toast({
+          title: "Account Created Successfully!",
+          description: "Please check your email to verify your account before signing in.",
+        });
+      } else {
+        navigate('/');
+      }
     } catch (error: any) {
       console.error('SignUp error:', error);
+      let errorMessage = "Failed to create account";
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "An account with this email already exists";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to create account",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -81,15 +106,64 @@ const FirebaseAuth = () => {
       navigate('/');
     } catch (error: any) {
       console.error('SignIn error:', error);
+      let errorMessage = "Failed to sign in";
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account found with this email";
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = "Incorrect password";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address";
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = "This account has been disabled";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to sign in",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-green-600">
+              Account Created Successfully!
+            </CardTitle>
+            <CardDescription>
+              We've sent a verification email to {signUpData.email}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 text-center">
+              <p className="text-sm text-gray-600">
+                Please check your email and click the verification link to activate your account.
+              </p>
+              <p className="text-xs text-gray-500">
+                Didn't receive the email? Check your spam folder or try signing up again.
+              </p>
+              <Button 
+                onClick={() => setShowSuccess(false)} 
+                variant="outline" 
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">

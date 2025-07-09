@@ -6,7 +6,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -17,7 +18,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string, role: 'member' | 'organizer') => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, role: 'member' | 'organizer') => Promise<{ needsVerification?: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -117,23 +118,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Update user profile
       await updateProfile(user, { displayName });
 
-      // Store additional user data in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        email,
-        displayName,
-        role,
-        createdAt: new Date(),
-        photoURL: user.photoURL
-      });
+      // Send email verification
+      await sendEmailVerification(user);
+      console.log('Email verification sent');
 
-      // Store user role separately for easier querying
-      await setDoc(doc(db, 'userRoles', user.uid), {
-        uid: user.uid,
-        role,
-        createdAt: new Date()
-      });
+      // Store additional user data in Firestore (with proper error handling)
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          email,
+          displayName,
+          role,
+          createdAt: new Date(),
+          photoURL: user.photoURL,
+          emailVerified: false
+        });
 
-      console.log('User data stored in Firestore');
+        // Store user role separately for easier querying
+        await setDoc(doc(db, 'userRoles', user.uid), {
+          uid: user.uid,
+          role,
+          createdAt: new Date()
+        });
+
+        console.log('User data stored in Firestore');
+      } catch (firestoreError) {
+        console.error('Error storing user data in Firestore:', firestoreError);
+        // Don't throw here - user account was created successfully
+      }
+
+      return { needsVerification: true };
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;
