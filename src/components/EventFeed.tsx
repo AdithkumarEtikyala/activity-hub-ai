@@ -167,7 +167,7 @@ const EventFeed = () => {
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {event.clubs?.name || (event.profiles?.full_name ? event.profiles.full_name : 'Event Organizer')}
+                    {event.clubs?.name || (event.profiles ? event.profiles.full_name : 'Event Organizer')}
                   </p>
                   <p className="text-sm text-gray-500">
                     {new Date(event.event_date).toLocaleDateString()}
