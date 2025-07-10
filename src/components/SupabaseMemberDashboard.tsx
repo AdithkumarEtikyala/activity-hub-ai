@@ -2,10 +2,9 @@
 import { useAuth } from "@/contexts/FirebaseAuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Home, Search, Heart, User, Users } from "lucide-react";
+import { LogOut, Home, Search, Heart, User, Users, Calendar } from "lucide-react";
 import SupabaseEventFeed from "./SupabaseEventFeed";
 import ClubsSection from "./ClubsSection";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SupabaseMemberDashboard = () => {

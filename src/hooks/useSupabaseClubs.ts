@@ -47,7 +47,7 @@ export const useSupabaseClubs = () => {
     }
   };
 
-  const createClub = async (clubData: Partial<Club>) => {
+  const createClub = async (clubData: Omit<Club, 'id' | 'created_at' | 'member_count' | 'is_active'>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -55,7 +55,11 @@ export const useSupabaseClubs = () => {
       const { error } = await supabase
         .from('clubs')
         .insert({
-          ...clubData,
+          name: clubData.name,
+          description: clubData.description,
+          logo_url: clubData.logo_url,
+          cover_image_url: clubData.cover_image_url,
+          category: clubData.category,
           created_by: user.id
         });
 

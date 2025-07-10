@@ -23,11 +23,11 @@ export interface SupabaseEvent {
   clubs?: {
     name: string;
     logo_url?: string;
-  };
+  } | null;
   profiles?: {
     full_name: string;
     avatar_url?: string;
-  };
+  } | null;
   event_attendees?: Array<{
     id: string;
     user_id: string;
@@ -70,7 +70,7 @@ export const useSupabaseEvents = () => {
       if (error) throw error;
 
       // Process events to add user-specific data
-      const processedEvents = data?.map(event => ({
+      const processedEvents: SupabaseEvent[] = data?.map(event => ({
         ...event,
         user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) : false,
         likes_count: 0, // We'll implement this when we add the likes table
