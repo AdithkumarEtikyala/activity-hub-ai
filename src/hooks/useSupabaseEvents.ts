@@ -69,11 +69,11 @@ export const useSupabaseEvents = () => {
 
       if (error) throw error;
 
-      // Process events to add user-specific data
+      // Process events to add user-specific data and ensure type compatibility
       const processedEvents: SupabaseEvent[] = (data || []).map(event => ({
         ...event,
-        user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) : false,
-        likes_count: 0, // We'll implement this when we add the likes table
+        user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) || false : false,
+        likes_count: 0,
         user_has_liked: false
       }));
 
