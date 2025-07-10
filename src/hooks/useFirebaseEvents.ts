@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -56,28 +55,52 @@ export const useFirebaseEvents = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('Setting up Firebase events listener');
+    
+    // Simplified query - just filter by isPublic, no ordering for now
     const q = query(
       collection(db, 'events'),
-      where('isPublic', '==', true),
-      orderBy('eventDate', 'asc')
+      where('isPublic', '==', true)
     );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const eventsArray: FirebaseEvent[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        eventsArray.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || null,
-        } as FirebaseEvent);
-      });
-      setEvents(eventsArray);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q, 
+      (querySnapshot) => {
+        console.log('Firebase events snapshot received, docs:', querySnapshot.size);
+        const eventsArray: FirebaseEvent[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.log('Event data:', data);
+          eventsArray.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || null,
+          } as FirebaseEvent);
+        });
+        
+        // Sort events by date in JavaScript instead of Firebase
+        eventsArray.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+        
+        console.log('Processed events:', eventsArray.length);
+        setEvents(eventsArray);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Firebase events listener error:', error);
+        setLoading(false);
+        toast({
+          title: "Error loading events",
+          description: "Failed to load events from database",
+          variant: "destructive"
+        });
+      }
+    );
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      console.log('Cleaning up Firebase events listener');
+      unsubscribe();
+    }
+  }, [toast]);
 
   const rsvpToEvent = async (eventId: string, userId: string) => {
     try {
