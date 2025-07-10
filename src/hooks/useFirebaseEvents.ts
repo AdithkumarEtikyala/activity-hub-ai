@@ -14,8 +14,7 @@ import {
   getDoc,
   arrayUnion,
   arrayRemove,
-  increment,
-  writeBatch
+  increment
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -59,11 +58,10 @@ export const useFirebaseEvents = () => {
   useEffect(() => {
     console.log('Setting up Firebase events listener');
     
-    // Query all public events
+    // Simplified query - just filter by isPublic, no ordering for now
     const q = query(
       collection(db, 'events'),
-      where('isPublic', '==', true),
-      orderBy('eventDate', 'asc')
+      where('isPublic', '==', true)
     );
 
     const unsubscribe = onSnapshot(
@@ -78,10 +76,14 @@ export const useFirebaseEvents = () => {
             id: doc.id,
             ...data,
             createdAt: data.createdAt?.toDate() || null,
+            // Ensure rsvp and likes are always arrays
             rsvp: Array.isArray(data.rsvp) ? data.rsvp : [],
             likes: Array.isArray(data.likes) ? data.likes : [],
           } as FirebaseEvent);
         });
+        
+        // Sort events by date in JavaScript instead of Firebase
+        eventsArray.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
         
         console.log('Processed events:', eventsArray.length);
         setEvents(eventsArray);
@@ -110,7 +112,7 @@ export const useFirebaseEvents = () => {
     try {
       const eventRef = doc(db, 'events', eventId);
       
-      // Check if event exists and get current data
+      // First check if the event exists and get current data
       const eventDoc = await getDoc(eventRef);
       if (!eventDoc.exists()) {
         console.error('Event does not exist:', eventId);
@@ -126,18 +128,13 @@ export const useFirebaseEvents = () => {
         return { success: false, error: 'Already RSVP\'d to this event' };
       }
       
-      // Use batch write to ensure atomic operation
-      const batch = writeBatch(db);
-      
-      // Update the event with new RSVP
-      batch.update(eventRef, {
+      console.log('Updating RSVP in Firebase:', { eventId, userId });
+      await updateDoc(eventRef, {
         rsvp: arrayUnion(userId),
         currentAttendees: increment(1)
       });
-      
-      await batch.commit();
 
-      // Update local state immediately for better UX
+      // Update local state
       setEvents(prevEvents => 
         prevEvents.map(event => 
           event.id === eventId 
@@ -155,14 +152,6 @@ export const useFirebaseEvents = () => {
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error RSVPing to event:', error);
-      
-      // Provide more specific error messages
-      if (error.code === 'permission-denied') {
-        return { success: false, error: 'You do not have permission to RSVP to this event. Please make sure you are signed in.' };
-      } else if (error.code === 'unauthenticated') {
-        return { success: false, error: 'Please sign in to RSVP to events.' };
-      }
-      
       return { success: false, error: error.message || 'Failed to RSVP to event' };
     }
   };
@@ -173,7 +162,7 @@ export const useFirebaseEvents = () => {
     try {
       const eventRef = doc(db, 'events', eventId);
       
-      // Check if event exists and get current data
+      // First check if the event exists and get current data
       const eventDoc = await getDoc(eventRef);
       if (!eventDoc.exists()) {
         console.error('Event does not exist:', eventId);
@@ -189,18 +178,13 @@ export const useFirebaseEvents = () => {
         return { success: false, error: 'Not RSVP\'d to this event' };
       }
       
-      // Use batch write to ensure atomic operation
-      const batch = writeBatch(db);
-      
-      // Update the event to remove RSVP
-      batch.update(eventRef, {
+      console.log('Cancelling RSVP in Firebase:', { eventId, userId });
+      await updateDoc(eventRef, {
         rsvp: arrayRemove(userId),
         currentAttendees: increment(-1)
       });
-      
-      await batch.commit();
 
-      // Update local state immediately for better UX
+      // Update local state
       setEvents(prevEvents => 
         prevEvents.map(event => 
           event.id === eventId 
@@ -218,14 +202,6 @@ export const useFirebaseEvents = () => {
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error cancelling RSVP:', error);
-      
-      // Provide more specific error messages
-      if (error.code === 'permission-denied') {
-        return { success: false, error: 'You do not have permission to cancel this RSVP.' };
-      } else if (error.code === 'unauthenticated') {
-        return { success: false, error: 'Please sign in to manage your RSVPs.' };
-      }
-      
       return { success: false, error: error.message || 'Failed to cancel RSVP' };
     }
   };
