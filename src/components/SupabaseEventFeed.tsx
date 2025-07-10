@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,7 +121,7 @@ const SupabaseEventFeed = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={event.profiles?.avatar_url} />
+                  <AvatarImage src={event.profiles?.avatar_url || undefined} />
                   <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
                     {event.profiles?.full_name?.charAt(0) || 'O'}
                   </AvatarFallback>
@@ -141,7 +140,7 @@ const SupabaseEventFeed = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  {event.category}
+                  {event.category || 'General'}
                 </Badge>
                 {isEventOrganizer(event) && (
                   <Button
@@ -168,7 +167,7 @@ const SupabaseEventFeed = () => {
                 <div className="absolute top-4 right-4">
                   <Badge className="bg-black/50 text-white border-0">
                     <Users className="w-3 h-3 mr-1" />
-                    {event.current_attendees}
+                    {event.current_attendees || 0}
                   </Badge>
                 </div>
               </div>
@@ -196,7 +195,7 @@ const SupabaseEventFeed = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-500" />
-                  <span>{event.venue}</span>
+                  <span>{event.venue || 'TBD'}</span>
                 </div>
               </div>
 
@@ -238,7 +237,7 @@ const SupabaseEventFeed = () => {
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm">
                         <Users className="w-4 h-4 mr-2" />
-                        View Members ({event.current_attendees})
+                        View Members ({event.current_attendees || 0})
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
@@ -254,14 +253,14 @@ const SupabaseEventFeed = () => {
                             <div key={attendee.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex items-center space-x-3">
                                 <Avatar className="w-8 h-8">
-                                  <AvatarImage src={attendee.profiles.avatar_url} />
+                                  <AvatarImage src={attendee.profiles?.avatar_url || undefined} />
                                   <AvatarFallback>
-                                    {attendee.profiles.full_name?.charAt(0) || 'U'}
+                                    {attendee.profiles?.full_name?.charAt(0) || 'U'}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <p className="font-medium text-sm">{attendee.profiles.full_name}</p>
-                                  <p className="text-xs text-gray-500">{attendee.profiles.email}</p>
+                                  <p className="font-medium text-sm">{attendee.profiles?.full_name || 'Unknown User'}</p>
+                                  <p className="text-xs text-gray-500">{attendee.profiles?.email || 'No email'}</p>
                                 </div>
                               </div>
                               <Badge variant="secondary" className="text-xs">

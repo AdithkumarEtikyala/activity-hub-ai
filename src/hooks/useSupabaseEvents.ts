@@ -6,36 +6,36 @@ import { useToast } from '@/hooks/use-toast';
 export interface SupabaseEvent {
   id: string;
   title: string;
-  description: string;
-  image_url?: string;
-  organizer_id: string;
-  created_at: string;
-  category: string;
-  venue: string;
+  description: string | null;
+  image_url?: string | null;
+  organizer_id: string | null;
+  created_at: string | null;
+  category: string | null;
+  venue: string | null;
   event_date: string;
-  club_id?: string;
-  google_event_id?: string;
-  google_calendar_link?: string;
-  current_attendees: number;
-  max_attendees?: number;
-  is_public: boolean;
-  tags?: string[];
+  club_id?: string | null;
+  google_event_id?: string | null;
+  google_calendar_link?: string | null;
+  current_attendees: number | null;
+  max_attendees?: number | null;
+  is_public: boolean | null;
+  tags?: string[] | null;
   clubs?: {
     name: string;
-    logo_url?: string;
+    logo_url?: string | null;
   } | null;
   profiles?: {
-    full_name: string;
-    avatar_url?: string;
+    full_name: string | null;
+    avatar_url?: string | null;
   } | null;
   event_attendees?: Array<{
     id: string;
-    user_id: string;
-    rsvp_status: string;
+    user_id: string | null;
+    rsvp_status: string | null;
     profiles: {
-      full_name: string;
-      email: string;
-      avatar_url?: string;
+      full_name: string | null;
+      email: string | null;
+      avatar_url?: string | null;
     };
   }>;
   likes_count?: number;
@@ -70,12 +70,12 @@ export const useSupabaseEvents = () => {
       if (error) throw error;
 
       // Process events to add user-specific data
-      const processedEvents: SupabaseEvent[] = data?.map(event => ({
+      const processedEvents: SupabaseEvent[] = (data || []).map(event => ({
         ...event,
         user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) : false,
         likes_count: 0, // We'll implement this when we add the likes table
         user_has_liked: false
-      })) || [];
+      }));
 
       setEvents(processedEvents);
     } catch (error) {
@@ -108,14 +108,14 @@ export const useSupabaseEvents = () => {
           event.id === eventId 
             ? { 
                 ...event, 
-                current_attendees: event.current_attendees + 1,
+                current_attendees: (event.current_attendees || 0) + 1,
                 user_has_rsvpd: true
               }
             : event
         )
       );
 
-      return { success: true };
+      return { success: true, error: null };
     } catch (error: any) {
       console.error('Error RSVPing to event:', error);
       return { success: false, error: error.message };
@@ -138,14 +138,14 @@ export const useSupabaseEvents = () => {
           event.id === eventId 
             ? { 
                 ...event, 
-                current_attendees: Math.max(event.current_attendees - 1, 0),
+                current_attendees: Math.max((event.current_attendees || 0) - 1, 0),
                 user_has_rsvpd: false
               }
             : event
         )
       );
 
-      return { success: true };
+      return { success: true, error: null };
     } catch (error: any) {
       console.error('Error cancelling RSVP:', error);
       return { success: false, error: error.message };
@@ -154,12 +154,12 @@ export const useSupabaseEvents = () => {
 
   const likeEvent = async (eventId: string, userId: string) => {
     // For now, just return success - we'll implement this when we add the likes table
-    return { success: true };
+    return { success: true, error: null };
   };
 
   const unlikeEvent = async (eventId: string, userId: string) => {
     // For now, just return success - we'll implement this when we add the likes table
-    return { success: true };
+    return { success: true, error: null };
   };
 
   const deleteEvent = async (eventId: string) => {
@@ -171,7 +171,7 @@ export const useSupabaseEvents = () => {
 
       if (error) throw error;
       await fetchEvents();
-      return { success: true };
+      return { success: true, error: null };
     } catch (error: any) {
       console.error('Error deleting event:', error);
       return { success: false, error: error.message };
