@@ -13,6 +13,8 @@ const FirebaseEventFeed = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  console.log('FirebaseEventFeed render - Events count:', events.length, 'Loading:', loading, 'User:', user?.uid);
+
   const handleRSVP = async (eventId: string) => {
     if (!user) {
       toast({
@@ -23,7 +25,8 @@ const FirebaseEventFeed = () => {
       return;
     }
 
-    const isAlreadyRsvpd = events.find(event => event.id === eventId)?.rsvp.includes(user.uid);
+    const event = events.find(event => event.id === eventId);
+    const isAlreadyRsvpd = event?.rsvp.includes(user.uid);
     
     try {
       if (isAlreadyRsvpd) {
@@ -71,7 +74,9 @@ const FirebaseEventFeed = () => {
   if (events.length === 0) {
     return (
       <div className="max-w-2xl mx-auto text-center py-8">
-        <p className="text-gray-600">No events available at the moment.</p>
+        <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No events available</h3>
+        <p className="text-gray-600">Be the first to create an event!</p>
       </div>
     );
   }
@@ -98,9 +103,11 @@ const FirebaseEventFeed = () => {
                     </p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  {event.category}
-                </Badge>
+                {event.category && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    {event.category}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
 
@@ -155,7 +162,7 @@ const FirebaseEventFeed = () => {
                 <div className="flex items-center space-x-4">
                   <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600">
                     <Heart className="w-4 h-4" />
-                    {event.likes.length}
+                    {event.likes?.length || 0}
                   </Button>
                   <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600">
                     <MessageCircle className="w-4 h-4" />

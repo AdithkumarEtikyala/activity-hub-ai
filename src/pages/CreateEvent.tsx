@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Image, Plus } from "lucide-react";
-import { createEvent } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const CreateEvent = () => {
   const { user } = useAuth();
@@ -50,19 +51,29 @@ const CreateEvent = () => {
     try {
       const tagsArray = eventData.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
       
-      await createEvent({
+      const eventDoc = {
         title: eventData.title,
         description: eventData.description,
         venue: eventData.venue,
-        eventDate: new Date(eventData.eventDate),
+        eventDate: eventData.eventDate,
         category: eventData.category,
-        imageUrl: eventData.imageUrl || undefined,
-        maxAttendees: eventData.maxAttendees ? parseInt(eventData.maxAttendees) : undefined,
+        imageUrl: eventData.imageUrl || null,
+        maxAttendees: eventData.maxAttendees ? parseInt(eventData.maxAttendees) : null,
         tags: tagsArray,
-        postedBy: user.uid,
+        organizerId: user.uid,
+        createdAt: serverTimestamp(),
         rsvp: [],
-        likes: []
-      });
+        likes: [],
+        currentAttendees: 0,
+        isPublic: true,
+        clubId: null,
+        googleEventId: null,
+        googleCalendarLink: null
+      };
+
+      console.log('Creating event with data:', eventDoc);
+      
+      await addDoc(collection(db, 'events'), eventDoc);
 
       toast({
         title: "Success!",
@@ -70,12 +81,12 @@ const CreateEvent = () => {
       });
       navigate('/dashboard');
     } catch (error) {
+      console.error('Error creating event:', error);
       toast({
         title: "Error",
         description: "Failed to create event",
         variant: "destructive"
       });
-      console.error('Error creating event:', error);
     } finally {
       setLoading(false);
     }
