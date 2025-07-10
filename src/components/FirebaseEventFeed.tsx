@@ -77,7 +77,7 @@ const FirebaseEventFeed = () => {
       console.error('Error with RSVP operation:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     }
@@ -156,7 +156,9 @@ const FirebaseEventFeed = () => {
               <div className="space-y-3">
                 <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
                 
-                <p className="text-gray-600">{event.description}</p>
+                {event.description && (
+                  <p className="text-gray-600">{event.description}</p>
+                )}
 
                 {event.tags && event.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -173,10 +175,12 @@ const FirebaseEventFeed = () => {
                     <Calendar className="w-4 h-4 text-blue-500" />
                     <span>{new Date(event.eventDate).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-500" />
-                    <span>{event.venue}</span>
-                  </div>
+                  {event.venue && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-500" />
+                      <span>{event.venue}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
