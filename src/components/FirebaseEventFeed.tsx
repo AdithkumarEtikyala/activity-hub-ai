@@ -26,10 +26,22 @@ const FirebaseEventFeed = () => {
     }
 
     const event = events.find(event => event.id === eventId);
-    const isAlreadyRsvpd = event?.rsvp.includes(user.uid);
+    if (!event) {
+      console.error('Event not found:', eventId);
+      toast({
+        title: "Error",
+        description: "Event not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('Event RSVP data:', event.rsvp, 'User ID:', user.uid);
+    const isAlreadyRsvpd = event.rsvp && Array.isArray(event.rsvp) && event.rsvp.includes(user.uid);
     
     try {
       if (isAlreadyRsvpd) {
+        console.log('Cancelling RSVP for event:', eventId);
         const result = await cancelRsvp(eventId, user.uid);
         if (result.success) {
           toast({
@@ -37,9 +49,15 @@ const FirebaseEventFeed = () => {
             description: "You've successfully cancelled your RSVP",
           });
         } else {
-          throw new Error(result.error);
+          console.error('Cancel RSVP error:', result.error);
+          toast({
+            title: "Error",
+            description: result.error || "Failed to cancel RSVP",
+            variant: "destructive"
+          });
         }
       } else {
+        console.log('RSVPing to event:', eventId);
         const result = await rsvpToEvent(eventId, user.uid);
         if (result.success) {
           toast({
@@ -47,14 +65,19 @@ const FirebaseEventFeed = () => {
             description: "You've successfully RSVP'd to this event",
           });
         } else {
-          throw new Error(result.error);
+          console.error('RSVP error:', result.error);
+          toast({
+            title: "Error",
+            description: result.error || "Failed to RSVP",
+            variant: "destructive"
+          });
         }
       }
     } catch (error) {
-      console.error('Error with RSVP:', error);
+      console.error('Error with RSVP operation:', error);
       toast({
         title: "Error",
-        description: "Failed to update RSVP",
+        description: "An unexpected error occurred",
         variant: "destructive"
       });
     }
@@ -84,7 +107,7 @@ const FirebaseEventFeed = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {events.map((event) => {
-        const userHasRsvpd = user && event.rsvp.includes(user.uid);
+        const userHasRsvpd = user && event.rsvp && Array.isArray(event.rsvp) && event.rsvp.includes(user.uid);
         
         return (
           <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border-0">
@@ -123,7 +146,7 @@ const FirebaseEventFeed = () => {
                   <div className="absolute top-4 right-4">
                     <Badge className="bg-black/50 text-white border-0">
                       <Users className="w-3 h-3 mr-1" />
-                      {event.rsvp.length}
+                      {(event.rsvp && Array.isArray(event.rsvp)) ? event.rsvp.length : 0}
                     </Badge>
                   </div>
                 </div>
@@ -162,7 +185,7 @@ const FirebaseEventFeed = () => {
                 <div className="flex items-center space-x-4">
                   <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600">
                     <Heart className="w-4 h-4" />
-                    {event.likes?.length || 0}
+                    {(event.likes && Array.isArray(event.likes)) ? event.likes.length : 0}
                   </Button>
                   <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600">
                     <MessageCircle className="w-4 h-4" />

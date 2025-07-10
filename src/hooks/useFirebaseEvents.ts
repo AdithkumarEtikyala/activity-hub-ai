@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -75,6 +76,9 @@ export const useFirebaseEvents = () => {
             id: doc.id,
             ...data,
             createdAt: data.createdAt?.toDate() || null,
+            // Ensure rsvp and likes are always arrays
+            rsvp: Array.isArray(data.rsvp) ? data.rsvp : [],
+            likes: Array.isArray(data.likes) ? data.likes : [],
           } as FirebaseEvent);
         });
         
@@ -103,8 +107,28 @@ export const useFirebaseEvents = () => {
   }, [toast]);
 
   const rsvpToEvent = async (eventId: string, userId: string) => {
+    console.log('RSVP operation started:', { eventId, userId });
+    
     try {
       const eventRef = doc(db, 'events', eventId);
+      
+      // First check if the event exists and get current data
+      const eventDoc = await getDoc(eventRef);
+      if (!eventDoc.exists()) {
+        console.error('Event does not exist:', eventId);
+        return { success: false, error: 'Event not found' };
+      }
+      
+      const eventData = eventDoc.data();
+      const currentRsvp = Array.isArray(eventData.rsvp) ? eventData.rsvp : [];
+      
+      // Check if user is already RSVP'd
+      if (currentRsvp.includes(userId)) {
+        console.log('User already RSVP\'d to this event');
+        return { success: false, error: 'Already RSVP\'d to this event' };
+      }
+      
+      console.log('Updating RSVP in Firebase:', { eventId, userId });
       await updateDoc(eventRef, {
         rsvp: arrayUnion(userId),
         currentAttendees: increment(1)
@@ -124,16 +148,37 @@ export const useFirebaseEvents = () => {
         )
       );
 
+      console.log('RSVP operation completed successfully');
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error RSVPing to event:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Failed to RSVP to event' };
     }
   };
 
   const cancelRsvp = async (eventId: string, userId: string) => {
+    console.log('Cancel RSVP operation started:', { eventId, userId });
+    
     try {
       const eventRef = doc(db, 'events', eventId);
+      
+      // First check if the event exists and get current data
+      const eventDoc = await getDoc(eventRef);
+      if (!eventDoc.exists()) {
+        console.error('Event does not exist:', eventId);
+        return { success: false, error: 'Event not found' };
+      }
+      
+      const eventData = eventDoc.data();
+      const currentRsvp = Array.isArray(eventData.rsvp) ? eventData.rsvp : [];
+      
+      // Check if user is actually RSVP'd
+      if (!currentRsvp.includes(userId)) {
+        console.log('User is not RSVP\'d to this event');
+        return { success: false, error: 'Not RSVP\'d to this event' };
+      }
+      
+      console.log('Cancelling RSVP in Firebase:', { eventId, userId });
       await updateDoc(eventRef, {
         rsvp: arrayRemove(userId),
         currentAttendees: increment(-1)
@@ -153,10 +198,11 @@ export const useFirebaseEvents = () => {
         )
       );
 
+      console.log('Cancel RSVP operation completed successfully');
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error cancelling RSVP:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Failed to cancel RSVP' };
     }
   };
 
