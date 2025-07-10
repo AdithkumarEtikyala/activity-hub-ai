@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Users, TrendingUp, Settings, LogOut, BarChart3 } from "lucide-react";
+import { Plus, Calendar, Users, TrendingUp, Settings, LogOut, BarChart3, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Event } from '@/types/firebase';
+import { FirebaseEvent } from '@/hooks/useFirebaseEvents';
+import { useToast } from "@/hooks/use-toast";
 
 const OrganizerDashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [events, setEvents] = useState<Event[]>([]);
+  const { toast } = useToast();
+  const [events, setEvents] = useState<FirebaseEvent[]>([]);
   const [stats, setStats] = useState({
     totalEvents: 0,
     totalAttendees: 0,
@@ -23,22 +25,34 @@ const OrganizerDashboard = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('Setting up organizer events listener for user:', user.uid);
+      
+      // Query events created by this organizer using the correct field name
       const q = query(
         collection(db, 'events'),
-        where('postedBy', '==', user.uid)
+        where('organizerId', '==', user.uid)
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const eventsArray: Event[] = [];
+        console.log('Organizer events snapshot received, docs:', querySnapshot.size);
+        const eventsArray: FirebaseEvent[] = [];
         querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.log('Organizer event data:', data);
           eventsArray.push({
             id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            eventDate: doc.data().eventDate?.toDate()
-          } as Event);
+            ...data,
+            createdAt: data.createdAt?.toDate() || null,
+            // Ensure rsvp and likes are always arrays
+            rsvp: Array.isArray(data.rsvp) ? data.rsvp : [],
+            likes: Array.isArray(data.likes) ? data.likes : [],
+          } as FirebaseEvent);
         });
         
+        // Sort events by date
+        eventsArray.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+        
+        console.log('Processed organizer events:', eventsArray.length);
         setEvents(eventsArray);
         
         // Calculate stats
@@ -51,11 +65,18 @@ const OrganizerDashboard = () => {
           totalAttendees,
           upcomingEvents
         });
+      }, (error) => {
+        console.error('Error fetching organizer events:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your events",
+          variant: "destructive"
+        });
       });
 
       return () => unsubscribe();
     }
-  }, [user]);
+  }, [user, toast]);
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +89,35 @@ const OrganizerDashboard = () => {
 
   const handleCreateEvent = () => {
     navigate('/create-event');
+  };
+
+  const handleEditEvent = (eventId: string) => {
+    // Navigate to edit event page (to be implemented)
+    toast({
+      title: "Coming Soon",
+      description: "Event editing functionality will be available soon",
+    });
+  };
+
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${eventTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+      toast({
+        title: "Success",
+        description: "Event deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -187,21 +237,41 @@ const OrganizerDashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {events.slice(0, 5).map((event) => (
+                {events.map((event) => (
                   <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{event.title}</h3>
                       <p className="text-sm text-gray-600">
-                        {event.eventDate.toLocaleDateString()} • {event.venue}
+                        {new Date(event.eventDate).toLocaleDateString()} • {event.venue}
                       </p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <Badge variant="secondary">
+                          {event.rsvp?.length || 0} attendees
+                        </Badge>
+                        {event.category && (
+                          <Badge variant="outline">
+                            {event.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge variant="secondary">
-                        {event.rsvp?.length || 0} attendees
-                      </Badge>
-                      <Button variant="outline" size="sm">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Manage
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditEvent(event.id)}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteEvent(event.id, event.title)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
                       </Button>
                     </div>
                   </div>
