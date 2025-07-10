@@ -1,0 +1,213 @@
+
+import { useState, useEffect } from 'react';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc,
+  where,
+  getDocs,
+  getDoc,
+  arrayUnion,
+  arrayRemove,
+  increment
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+
+export interface FirebaseEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  imageUrl?: string | null;
+  organizerId: string | null;
+  createdAt: Date | null;
+  category: string | null;
+  venue: string | null;
+  eventDate: string;
+  clubId?: string | null;
+  googleEventId?: string | null;
+  googleCalendarLink?: string | null;
+  currentAttendees: number | null;
+  maxAttendees?: number | null;
+  isPublic: boolean | null;
+  tags?: string[] | null;
+  rsvp: string[];
+  likes: string[];
+  organizer?: {
+    name: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  club?: {
+    name: string;
+    logoUrl?: string | null;
+  } | null;
+  userHasRsvpd?: boolean;
+  userHasLiked?: boolean;
+}
+
+export const useFirebaseEvents = () => {
+  const [events, setEvents] = useState<FirebaseEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'events'),
+      where('isPublic', '==', true),
+      orderBy('eventDate', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const eventsArray: FirebaseEvent[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        eventsArray.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || null,
+        } as FirebaseEvent);
+      });
+      setEvents(eventsArray);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const rsvpToEvent = async (eventId: string, userId: string) => {
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        rsvp: arrayUnion(userId),
+        currentAttendees: increment(1)
+      });
+
+      // Update local state
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                currentAttendees: (event.currentAttendees || 0) + 1,
+                userHasRsvpd: true,
+                rsvp: [...(event.rsvp || []), userId]
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error RSVPing to event:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const cancelRsvp = async (eventId: string, userId: string) => {
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        rsvp: arrayRemove(userId),
+        currentAttendees: increment(-1)
+      });
+
+      // Update local state
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                currentAttendees: Math.max((event.currentAttendees || 0) - 1, 0),
+                userHasRsvpd: false,
+                rsvp: (event.rsvp || []).filter(id => id !== userId)
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error cancelling RSVP:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const likeEvent = async (eventId: string, userId: string) => {
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        likes: arrayUnion(userId)
+      });
+
+      // Update local state
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                userHasLiked: true,
+                likes: [...(event.likes || []), userId]
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error liking event:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const unlikeEvent = async (eventId: string, userId: string) => {
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        likes: arrayRemove(userId)
+      });
+
+      // Update local state
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                userHasLiked: false,
+                likes: (event.likes || []).filter(id => id !== userId)
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error unliking event:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  return {
+    events,
+    loading,
+    rsvpToEvent,
+    cancelRsvp,
+    likeEvent,
+    unlikeEvent,
+    deleteEvent
+  };
+};
