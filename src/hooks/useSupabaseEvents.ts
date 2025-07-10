@@ -102,7 +102,7 @@ export const useSupabaseEvents = () => {
           user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) || false : false,
           likes_count: likesCount || 0,
           user_has_liked: userHasLiked
-        };
+        } as SupabaseEvent;
       }));
 
       setEvents(eventsWithLikes);
