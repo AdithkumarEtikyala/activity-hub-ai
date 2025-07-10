@@ -69,15 +69,44 @@ export const useSupabaseEvents = () => {
 
       if (error) throw error;
 
-      // Process events to add user-specific data and ensure type compatibility
-      const processedEvents: SupabaseEvent[] = (data || []).map(event => ({
-        ...event,
-        user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) || false : false,
-        likes_count: 0,
-        user_has_liked: false
+      // Get likes count and user likes for each event
+      const eventsWithLikes = await Promise.all((data || []).map(async (event) => {
+        // Get likes count
+        const { count: likesCount, error: likesError } = await supabase
+          .from('event_likes')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', event.id);
+
+        if (likesError) {
+          console.error('Error fetching likes count:', likesError);
+        }
+
+        // Check if current user has liked this event
+        let userHasLiked = false;
+        if (user) {
+          const { data: userLike, error: userLikeError } = await supabase
+            .from('event_likes')
+            .select('id')
+            .eq('event_id', event.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (userLikeError) {
+            console.error('Error checking user like:', userLikeError);
+          } else {
+            userHasLiked = !!userLike;
+          }
+        }
+
+        return {
+          ...event,
+          user_has_rsvpd: user ? event.event_attendees?.some((attendee: any) => attendee.user_id === user.id) || false : false,
+          likes_count: likesCount || 0,
+          user_has_liked: userHasLiked
+        };
       }));
 
-      setEvents(processedEvents);
+      setEvents(eventsWithLikes);
     } catch (error) {
       console.error('Error fetching events:', error);
       toast({
@@ -153,13 +182,64 @@ export const useSupabaseEvents = () => {
   };
 
   const likeEvent = async (eventId: string, userId: string) => {
-    // For now, just return success - we'll implement this when we add the likes table
-    return { success: true, error: null };
+    try {
+      const { error } = await supabase
+        .from('event_likes')
+        .insert({
+          event_id: eventId,
+          user_id: userId
+        });
+
+      if (error) throw error;
+
+      // Update the events state locally
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                likes_count: (event.likes_count || 0) + 1,
+                user_has_liked: true
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error liking event:', error);
+      return { success: false, error: error.message };
+    }
   };
 
   const unlikeEvent = async (eventId: string, userId: string) => {
-    // For now, just return success - we'll implement this when we add the likes table
-    return { success: true, error: null };
+    try {
+      const { error } = await supabase
+        .from('event_likes')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Update the events state locally
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                likes_count: Math.max((event.likes_count || 0) - 1, 0),
+                user_has_liked: false
+              }
+            : event
+        )
+      );
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error unliking event:', error);
+      return { success: false, error: error.message };
+    }
   };
 
   const deleteEvent = async (eventId: string) => {
