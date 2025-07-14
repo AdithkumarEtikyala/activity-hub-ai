@@ -1,9 +1,67 @@
 
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim().split(',').map(title => title.trim());
+  } catch (error) {
+    console.error('Error getting personalized recommendations:', error);
+    return [];
+  }
+};
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = 'your-gemini-api-key'; // This should be set in environment variables
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+export const chatWithGemini = async (message: string, context?: string): Promise<string> => {
+  try {
+    if (!API_KEY) {
+      return "I'm sorry, the AI assistant is not configured. Please contact support.";
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `You are CampusConnect AI, a helpful assistant for a college event management platform. 
+    
+    Context: ${context || 'General campus event assistance'}
+    
+    User message: ${message}
+    
+    Provide a helpful, friendly response about campus events, RSVPs, clubs, or general campus life. 
+    Keep responses conversational and under 150 words. If you don't know something specific, 
+    suggest they contact event organizers or check the event details.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
+  } catch (error) {
+    console.error('Error with Gemini chat:', error);
+    return "I'm having trouble processing your request right now. Please try again later or contact support.";
+  }
+};
+
+export const getPersonalizedEventRecommendations = async (
+  userProfile: any, 
+  userHistory: string[], 
+  availableEvents: any[]
+): Promise<string[]> => {
+  try {
+    if (!API_KEY) return [];
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `Based on a user's profile and event history, recommend relevant events:
+    
+    User Profile: ${JSON.stringify(userProfile)}
+    Past Events: ${userHistory.join(', ')}
+    Available Events: ${availableEvents.map(e => `${e.title} (${e.category})`).join(', ')}
+    
+    Return the top 5 most relevant event titles as a comma-separated list, considering:
+    - User's interests and major
+    - Past event attendance patterns
+    - Event categories and timing
+    - Diversity of recommendations
+    
+    Return only event titles that exist in the available events list.`;
 export const generateEventTitle = async (description: string, category: string): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });

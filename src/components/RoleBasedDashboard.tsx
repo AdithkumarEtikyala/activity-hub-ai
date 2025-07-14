@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/contexts/FirebaseAuthContext";
-import OrganizerDashboard from "./OrganizerDashboard";
-import FirebaseMemberDashboard from "./FirebaseMemberDashboard";
+import EnhancedOrganizerDashboard from "./EnhancedOrganizerDashboard";
+import PersonalizedDashboard from "./PersonalizedDashboard";
 
 const RoleBasedDashboard = () => {
   const { user, loading } = useAuth();
@@ -24,10 +24,10 @@ const RoleBasedDashboard = () => {
 
   // Check user role and render appropriate dashboard
   if (user.role === 'organizer') {
-    return <OrganizerDashboard />;
+    return <EnhancedOrganizerDashboard />;
   }
 
-  return <FirebaseMemberDashboard />;
+  return <PersonalizedDashboard />;
 };
 
 export default RoleBasedDashboard;

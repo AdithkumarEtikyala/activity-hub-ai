@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Calendar, Plus } from "lucide-react";
+import { LogOut, User, Calendar, Plus, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/FirebaseAuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -42,6 +42,14 @@ const Navbar = () => {
               <>
                 <Button 
                   variant="ghost" 
+                  onClick={() => navigate('/dashboard')}
+                  className="text-gray-700 hover:text-blue-600"
+                >
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+                <Button 
+                  variant="ghost" 
                   onClick={() => navigate('/')}
                   className="text-gray-700 hover:text-blue-600"
                 >
@@ -58,13 +66,6 @@ const Navbar = () => {
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create Event
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => navigate('/dashboard')}
-                      className="text-gray-700 hover:text-blue-600"
-                    >
-                      Dashboard
                     </Button>
                   </>
                 )}

@@ -1,7 +1,8 @@
 
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import FirebaseEventFeed from "@/components/FirebaseEventFeed";
+import EnhancedEventFeed from "@/components/EnhancedEventFeed";
+import ChatBot from "@/components/ChatBot";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -25,9 +26,10 @@ const Index = () => {
               Discover exciting events happening on your campus
             </p>
           </div>
-          <FirebaseEventFeed />
+          <EnhancedEventFeed />
         </div>
       </section>
+      <ChatBot />
     </div>
   );
 };

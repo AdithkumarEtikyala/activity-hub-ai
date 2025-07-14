@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/FirebaseAuthContext";
 import Index from "./pages/Index";
 import FirebaseAuth from "./pages/FirebaseAuth";
 import RoleBasedDashboard from "./components/RoleBasedDashboard";
+import UserProfile from "./components/UserProfile";
 import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<FirebaseAuth />} />
             <Route path="/dashboard" element={<RoleBasedDashboard />} />
+            <Route path="/profile" element={<UserProfile />} />
             <Route path="/create-event" element={<CreateEvent />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
