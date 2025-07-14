@@ -1,12 +1,3 @@
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text().trim().split(',').map(title => title.trim());
-  } catch (error) {
-    console.error('Error getting personalized recommendations:', error);
-    return [];
-  }
-};
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -62,6 +53,16 @@ export const getPersonalizedEventRecommendations = async (
     - Diversity of recommendations
     
     Return only event titles that exist in the available events list.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim().split(',').map(title => title.trim());
+  } catch (error) {
+    console.error('Error getting personalized recommendations:', error);
+    return [];
+  }
+};
+
 export const generateEventTitle = async (description: string, category: string): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
