@@ -9,6 +9,7 @@ import { useFirebaseEvents } from '@/hooks/useFirebaseEvents';
 import { useToast } from '@/hooks/use-toast';
 import { createGoogleCalendarLink } from '@/lib/googleCalendar';
 import { getPersonalizedEventRecommendations } from '@/lib/gemini';
+import GamificationBadges from './GamificationBadges';
 
 const PersonalizedDashboard = () => {
   const { user } = useAuth();
@@ -311,6 +312,9 @@ const PersonalizedDashboard = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Gamification */}
+            <GamificationBadges />
+            
             {/* Trending Events */}
             <Card>
               <CardHeader>

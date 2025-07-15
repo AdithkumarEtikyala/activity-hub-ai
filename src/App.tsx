@@ -11,6 +11,7 @@ import RoleBasedDashboard from "./components/RoleBasedDashboard";
 import UserProfile from "./components/UserProfile";
 import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
+import ExplorePage from "./components/ExplorePage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dashboard" element={<RoleBasedDashboard />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/create-event" element={<CreateEvent />} />
+            <Route path="/explore" element={<ExplorePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

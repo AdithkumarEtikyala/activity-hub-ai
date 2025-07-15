@@ -8,9 +8,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Calendar, Plus, LayoutDashboard } from "lucide-react";
+import { LogOut, User, Calendar, Plus, LayoutDashboard, Compass, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/FirebaseAuthContext";
 import { useNavigate } from "react-router-dom";
+import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -57,6 +58,15 @@ const Navbar = () => {
                   Events
                 </Button>
                 
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/explore')}
+                  className="text-gray-700 hover:text-blue-600"
+                >
+                  <Compass className="w-4 h-4 mr-2" />
+                  Explore
+                </Button>
+                
                 {user.role === 'organizer' && (
                   <>
                     <Button 
@@ -70,6 +80,12 @@ const Navbar = () => {
                   </>
                 )}
 
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </Button>
+                
+                <DarkModeToggle />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Avatar className="h-8 w-8 cursor-pointer">

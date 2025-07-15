@@ -1,27 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  BookmarkPlus, 
-  ExternalLink,
-  Search,
-  Filter,
-  TrendingUp
-} from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/FirebaseAuthContext';
 import { useFirebaseEvents } from '@/hooks/useFirebaseEvents';
 import { useToast } from '@/hooks/use-toast';
-import { createGoogleCalendarLink } from '@/lib/googleCalendar';
+import EventCard from './EventCard';
+import { Card, CardContent } from '@/components/ui/card';
 
 const EnhancedEventFeed = () => {
   const { events, loading, rsvpToEvent, cancelRsvp, likeEvent, unlikeEvent } = useFirebaseEvents();
@@ -235,139 +220,8 @@ const EnhancedEventFeed = () => {
         <div className="space-y-6">
           {filteredEvents.map((event) => {
             const userHasRsvpd = user && event.rsvp && Array.isArray(event.rsvp) && event.rsvp.includes(user.uid);
-            const userHasLiked = user && event.likes && Array.isArray(event.likes) && event.likes.includes(user.uid);
-            const isPopular = (event.rsvp?.length || 0) + (event.likes?.length || 0) > 10;
-            
-            return (
               <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border-0">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
-                          {event.title.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-gray-900">Event Organizer</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(event.eventDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {isPopular && (
-                        <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Trending
-                        </Badge>
-                      )}
-                      {event.category && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                          {event.category}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pb-4">
-                  {/* Event Image */}
-                  {event.imageUrl && (
-                    <div className="relative mb-4 rounded-lg overflow-hidden">
-                      <img 
-                        src={event.imageUrl} 
-                        alt={event.title}
-                        className="w-full h-64 object-cover"
-                      />
-                      <div className="absolute top-4 right-4">
-                        <Badge className="bg-black/50 text-white border-0">
-                          <Users className="w-3 h-3 mr-1" />
-                          {(event.rsvp && Array.isArray(event.rsvp)) ? event.rsvp.length : 0}
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Event Details */}
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-                    
-                    <p className="text-gray-600">{event.description}</p>
-
-                    {event.tags && event.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {event.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-blue-500" />
-                        <span>{new Date(event.eventDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        <span>{event.venue}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center space-x-4">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className={`flex items-center gap-2 ${userHasLiked ? 'text-red-600' : 'text-gray-600'}`}
-                        onClick={() => handleLike(event.id)}
-                      >
-                        <Heart className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} />
-                        {(event.likes && Array.isArray(event.likes)) ? event.likes.length : 0}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600">
-                        <MessageCircle className="w-4 h-4" />
-                        Comment
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="flex items-center gap-2 text-gray-600"
-                        onClick={() => handleShare(event)}
-                      >
-                        <Share2 className="w-4 h-4" />
-                        Share
-                      </Button>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-gray-600"
-                        onClick={() => handleAddToCalendar(event)}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className={`${
-                          userHasRsvpd 
-                            ? 'bg-gray-500 hover:bg-gray-600' 
-                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-                        }`}
-                        onClick={() => handleRSVP(event.id)}
-                        disabled={!user}
-                      >
-                        {!user ? 'Sign in to RSVP' : userHasRsvpd ? 'Cancel RSVP' : 'RSVP'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <EventCard key={event.id} event={event} showComments={true} />
             );
           })}
         </div>

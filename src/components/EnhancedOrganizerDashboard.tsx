@@ -27,6 +27,7 @@ import { collection, query, where, onSnapshot, deleteDoc, doc, getDocs } from 'f
 import { db } from '@/lib/firebase';
 import { FirebaseEvent } from '@/hooks/useFirebaseEvents';
 import { useToast } from "@/hooks/use-toast";
+import OrganizerAnalytics from './OrganizerAnalytics';
 
 interface AttendeeInfo {
   uid: string;
@@ -332,9 +333,10 @@ const EnhancedOrganizerDashboard = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="events">My Events</TabsTrigger>
             <TabsTrigger value="attendees">Event Attendees</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events">
@@ -514,6 +516,10 @@ const EnhancedOrganizerDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="analytics">
+            <OrganizerAnalytics />
           </TabsContent>
         </Tabs>
       </main>
